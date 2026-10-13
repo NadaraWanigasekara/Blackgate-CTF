@@ -1,0 +1,24 @@
+# BLACKGATE Stage 6 box: deliberately vulnerable target, deployed on its own.
+# Fully self-contained: own network, own secrets, no link to the platform.
+services:
+  box:
+    build: .
+    container_name: blackgate-box
+    ports: ["${BOX_BIND:-0.0.0.0}:${BOX_PORT:-9000}:5000"]
+    environment:
+      - FLAG=${FLAG:?copy .env.example to .env}
+      - PYTHONDONTWRITEBYTECODE=1
+    # containment: a compromised box cannot write to its image or escalate
+    read_only: true
+    tmpfs: ["/tmp:size=16m"]      # the SQLite DB lives here and resets on restart
+    user: "box"
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    pids_limit: 100
+    mem_limit: 256m
+    cpus: 0.5
+    networks: [box_net]
+    restart: unless-stopped
+networks:
+  box_net:
+    driver: bridge

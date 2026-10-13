@@ -1,0 +1,12 @@
+NIGHTFALL FREIGHT CO. | EMPLOYEE DIRECTORY (ARCHIVED)
+
+Name                 Department               Handle
+Amara Perera         Operations               amara.ops
+Jon Bell             Finance                  jbell
+Maya Fernando        Communications           maya.comms
+Priya Alwis          Infrastructure (Legacy)  priya.alwis
+Kasun Perera         Infrastructure           kasun.perera
+
+Notes:
+The Infrastructure (Legacy) team was decommissioned in 2022 and no longer manages any active systems.
+Archive records reference staff by employee handle rather than full name.

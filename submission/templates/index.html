@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLACKGATE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <span class="brand-mark"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4f9a"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><path d="M24 3l17 9.5v23L24 45 7 35.5v-23z" fill="none" stroke="url(#lg)" stroke-width="2.6" stroke-linejoin="round"/><path d="M16 36V22a8 8 0 0116 0v14" fill="none" stroke="url(#lg)" stroke-width="2.6" stroke-linecap="round"/><circle cx="24" cy="26" r="2.6" fill="url(#lg)"/><path d="M24 28v5" stroke="url(#lg)" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+      <span class="brand-name">BLACKGATE<small>OPERATION BLIND DOCK</small></span>
+    </a>
+    <div class="nav-right">
+      <span class="pill-stat">IE3132 &bull; Pen Testing</span>
+      <span class="pill-stat"><b>{{ total_score }}</b> pts</span>
+    </div>
+  </div>
+</nav>
+
+<header class="hero-band" id="top">
+  <div class="wrap">
+    <div class="hero">
+      <div class="eyebrow">AUTHORIZED SECURITY INVESTIGATION</div>
+      <h1>Hack your way through <em>Blind Dock</em></h1>
+      <p class="lead">Trace the Nightfall Freight Co. breach across six stages, from public records to the admin gateway. This is the flag submission site. Each completed stage unlocks the next. Hints are available at a points cost.</p>
+      <div class="cta">
+        {% set next_stage = namespace(id=1) %}
+        {% for s in stages %}{% if s.id in completed %}{% set next_stage.id = s.id + 1 %}{% endif %}{% endfor %}
+        {% if next_stage.id <= 6 %}
+        <a class="btn btn-lime" href="/stage/{{ next_stage.id }}">{% if completed|length == 0 %}Start Stage 1{% else %}Continue to Stage {{ next_stage.id }}{% endif %}</a>
+        {% else %}
+        <a class="btn btn-lime" href="#stages">Investigation complete</a>
+        {% endif %}
+        <form method="post" action="/reset"><button class="btn btn-white reset">Reset investigation</button></form>
+      </div>
+      <div class="checks"><span>Six stages</span><span>Progressive difficulty</span><span>Hint-based scoring</span></div>
+    </div>
+  </div>
+  <div class="tag-float"><i></i>ISOLATED LAB</div>
+</header>
+
+<main class="wrap">
+  {% if case_file %}
+  {% if result %}<div class="result {{ result[0] }}">{{ result[1] }}</div>{% endif %}
+  {% set show_form = true %}{% include '_casefile.html' %}
+  {% endif %}
+
+  <section class="stats" id="progress">
+    <div class="stat"><span class="label">Score</span><span class="value lime">{{ total_score }} pts</span></div>
+    <div class="stat"><span class="label">Time elapsed</span><span class="value" id="timer">00:00:00</span></div>
+    <div class="stat">
+      <span class="label">Stages complete</span><span class="value">{{ completed|length }} / 6</span>
+      <div class="progress"><i style="width:{{ (completed|length / 6 * 100)|round|int }}%"></i></div>
+    </div>
+  </section>
+
+  {% if result and not case_file %}<div class="result {{ result[0] }}">{{ result[1] }}</div>{% endif %}
+
+  <section class="block" id="stages">
+    <div class="sec-head">
+      <div>
+        <h2>Challenges</h2>
+        <p>Recover each flag, then validate it here.</p>
+      </div>
+    </div>
+    <div class="grid">
+      {% for s in stages %}
+      {% set locked = s.id > 1 and (s.id - 1) not in completed %}
+      <article class="card {% if s.id in completed %}done{% endif %} {% if locked %}is-locked{% endif %}">
+        <div class="card-top">
+          <div class="num">0{{ s.id }}</div>
+          {% if s.id in completed %}<span class="status done">&#10003; Completed</span>
+          {% elif locked %}<span class="status">&#128274; Locked</span>
+          {% else %}<span class="status open">Available</span>{% endif %}
+        </div>
+        <h3>{{ s.title }}</h3>
+        <div class="meta">
+          <span class="chip">{{ s.category }}</span>
+          <span class="chip diff">{{ s.difficulty }}</span>
+        </div>
+        <span class="points">
+          {% if s.id in completed %}Earned {{ earned.get(s.id|string, 0) }} pts
+          {% else %}Worth {{ current_points[s.id] }} pts{% endif %}
+        </span>
+        <p>{{ s.summary }}</p>
+        {% if not locked %}<a class="card-link" href="/stage/{{ s.id }}">Hints &amp; scoring &rarr;</a>
+        {% else %}<span class="locked">Complete Stage {{ s.id - 1 }} first</span>{% endif %}
+        {% if s.id in completed %}
+          <div class="result success" role="status">&#10003; Completed — flag accepted</div>
+        {% else %}
+          <form method="post" action="/submit">
+            <input type="hidden" name="stage" value="{{ s.id }}">
+            <input name="flag" placeholder="{{ s.flag_format }}" aria-label="Stage {{ s.id }} flag" required {% if locked %}disabled{% endif %}>
+            <button {% if locked %}disabled{% endif %}>Validate</button>
+          </form>
+          <small class="flag-format">{{ s.flag_format }}</small>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+
+<footer class="foot">BLACKGATE &bull; Operation Blind Dock &bull; IE3132 Penetration Testing</footer>
+
+<script>
+const startTs = {{ start_ts|tojson }};
+const finishTs = {{ finish_ts|tojson }};
+function fmt(s){
+  s = Math.max(0, Math.floor(s));
+  const h = String(Math.floor(s/3600)).padStart(2,'0');
+  const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const sec = String(s%60).padStart(2,'0');
+  return h+':'+m+':'+sec;
+}
+function tick(){
+  if(!startTs){ document.getElementById('timer').textContent = '00:00:00'; return; }
+  const end = finishTs ? finishTs : (Date.now()/1000);
+  document.getElementById('timer').textContent = fmt(end - startTs);
+}
+tick();
+if(startTs && !finishTs){ setInterval(tick, 1000); }
+</script>
+<script src="{{ url_for('static', filename='bg.js') }}"></script>
+</body>
+</html>

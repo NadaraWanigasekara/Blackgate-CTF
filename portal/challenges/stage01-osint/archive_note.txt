@@ -1,0 +1,7 @@
+NIGHTFALL ARCHIVE NOTE
+
+Investigations involving the archived infrastructure should begin with the current Infrastructure
+handle listed in the employee directory. The legacy team was decommissioned before the incident window.
+
+Archive image: nightfall_archive.png
+The archive photograph was retained with its original export metadata intact.

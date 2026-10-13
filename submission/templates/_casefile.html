@@ -1,0 +1,8 @@
+{# Case file card. Expects `case_file` ({stage, sections}) and optional `show_form`. #}
+<section class="casefile" id="casefile">
+  <div class="cf-tag">CASE FILE &bull; OPERATION BLIND DOCK &bull; STAGE {{ case_file.stage }}</div>
+  {% for heading, paras in case_file.sections %}
+    <h2>{{ heading }}</h2>
+    {% for p in paras %}<p>{{ p|safe }}</p>{% endfor %}
+  {% endfor %}
+</section>
